@@ -13,11 +13,11 @@ const urlDatabase = {
 
 const generateRandomString = () => {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvxyz';
-  const result = '';
+  const result = [];
   for (let i = 0; i <= 6; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)]
+    result.push(chars[Math.floor(Math.random() * chars.length)]);
   }
-  return result;
+  return result.join('');
 };
 
 app.get('/', (req, res) => {
@@ -31,7 +31,7 @@ app.get('/urls', (req, res) => {
 
 app.post('/urls', (req, res) => {
   console.log(req.body);
-  res.send('ok');
+  res.send(generateRandomString());
 });
 
 app.get('/urls/new', (req, res) => {
