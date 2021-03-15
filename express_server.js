@@ -11,33 +11,43 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+// Generates a random 6-char alphanumeric string
+// Used for making our short URLs
 const generateRandomString = () => {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvxyz';
   const result = [];
-  for (let i = 0; i <= 6; i++) {
+  for (let i = 0; i < 6; i++) {
     result.push(chars[Math.floor(Math.random() * chars.length)]);
   }
   return result.join('');
 };
 
+// Home -> redirect to /urls
 app.get('/', (req, res) => {
-  res.send('Hello!');
+  console.log(urlDatabase);
+  res.redirect('/urls');
 });
 
+// Show all long/short URLs saved
 app.get('/urls', (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
 
+// Create a new short URL
 app.post('/urls', (req, res) => {
-  console.log(req.body);
-  res.send(generateRandomString());
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls/${shortURL}`);
 });
 
+// Show short URL creation page
 app.get('/urls/new', (req, res) => {
   res.render('urls_new');
 });
 
+// Show details on an existing short URL
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     longURL: urlDatabase[req.params.shortURL],
@@ -46,14 +56,13 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
+// Given short URL, redirect to long URL
+app.get('/u/:shortURL', (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL]
+  res.redirect(longURL);
 });
 
-app.get('/hello', (req, res) => {
-  res.send('<html><body>Hello <b>World</b></body></html>');
-});
-
+// Run the server
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
