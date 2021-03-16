@@ -9,23 +9,23 @@
       <div class="navbar-nav" style="width: 100%;">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <div style="margin-left: auto; margin-right: 0px;">
+        <div style="margin-left: auto;">
           <% if (locals.username) { %>
             <div style="display: flex;">
-              <div style="padding: 0 10px; height: 40px;">
-                <p style="line-height: 40px;">User: <%= username %>
+              <div style="display: flex; align-items: center;">
+                <p style="margin-bottom: 0px;">User: <%= username %>
                 </p>
               </div>
-              <div style="padding: 0 10px; height: 40px;">
+              <div style="padding: 0 10px;">
                 <form method="post" action="/logout">
                   <button type="submit" class="btn btn-outline-secondary">Logout</button>
                 </form>
               </div>
             </div>
             <% } else { %>
-              <div style="padding: 0 10px; height: 40px;">
+              <div style="padding: 0 10px;">
                 <form method="post" action="/login">
-                  <div class="input-group mb-3">
+                  <div class="input-group mb-3" style="margin-bottom: 0!important;">
                     <input type="text" name="username" placeholder="username" class="form-control">
                     <div class="input-group-append">
                       <button type="submit" class="form-control">Sign In</button>
