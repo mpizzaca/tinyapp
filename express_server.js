@@ -22,6 +22,21 @@ const generateRandomString = () => {
   return result.join('');
 };
 
+// Inserts/updates a URL
+const insertURL = (longURL, shortURL) => {
+  // if http:// isn't in given URL, add it
+  // TODO: make this more robust
+  if (longURL.search(/https*:\/\//) === -1) {
+    longURL = 'http://' + longURL;
+  }
+  urlDatabase[shortURL] = longURL;
+};
+
+// Deletes a URL
+const deleteURL = shortURL => {
+  delete urlDatabase[shortURL];
+};
+
 // Home -> redirect to /urls
 app.get('/', (req, res) => {
   console.log(urlDatabase);
@@ -38,21 +53,22 @@ app.get('/urls', (req, res) => {
 app.post('/urls', (req, res) => {
   const shortURL = generateRandomString();
   let longURL = req.body.longURL;
+  insertURL(longURL, shortURL);
+  res.redirect(`/urls/${shortURL}`);
+});
 
-  // if http:// isn't in given URL, add it
-  // TODO: make this more robust
-  if (longURL.search(/https*:\/\//) === -1) {
-    longURL = 'http://' + longURL;
-  }
-
-  urlDatabase[shortURL] = longURL;
+// Updates the longURL for a given shortURL
+app.post('/urls/:shortURL', (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longURL;
+  insertURL(longURL, shortURL);
   res.redirect(`/urls/${shortURL}`);
 });
 
 // Deletes an existing short URL
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
+  deleteURL(shortURL);
   res.redirect('/urls');
 });
 
