@@ -40,12 +40,20 @@ app.post('/urls', (req, res) => {
   let longURL = req.body.longURL;
 
   // if http:// isn't in given URL, add it
+  // TODO: make this more robust
   if (longURL.search(/https*:\/\//) === -1) {
     longURL = 'http://' + longURL;
   }
 
   urlDatabase[shortURL] = longURL;
   res.redirect(`/urls/${shortURL}`);
+});
+
+// Deletes an existing short URL
+app.post('/urls/:shortURL/delete', (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect('/urls');
 });
 
 // Show short URL creation page
