@@ -79,7 +79,10 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 // Show short URL creation page
 app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
+  const templateVars = {
+    username: req.cookies.username,
+  }
+  res.render('urls_new', templateVars);
 });
 
 // Show details on an existing short URL
