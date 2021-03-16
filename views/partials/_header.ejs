@@ -17,23 +17,23 @@
                 </p>
               </div>
               <div style="padding: 0 10px;">
-                <form method="post" action="/logout">
+                <form method="post" action="/logout" style="margin-block-end: 0;">
                   <button type="submit" class="btn btn-outline-secondary">Logout</button>
                 </form>
               </div>
             </div>
-            <% } else { %>
-              <div style="padding: 0 10px;">
-                <form method="post" action="/login">
-                  <div class="input-group mb-3" style="margin-bottom: 0!important;">
-                    <input type="text" name="username" placeholder="username" class="form-control">
-                    <div class="input-group-append">
-                      <button type="submit" class="form-control">Sign In</button>
-                    </div>
+          <% } else { %>
+            <div style="padding: 0 10px;">
+              <form method="post" action="/login">
+                <div class="input-group mb-3" style="margin-bottom: 0!important;">
+                  <input type="text" name="username" placeholder="username" class="form-control">
+                  <div class="input-group-append">
+                    <button type="submit" class="form-control">Sign In</button>
                   </div>
-                </form>
-              </div>
-            <% } %>
+                </div>
+              </form>
+            </div>
+          <% } %>
         </div>
       </div>
     </div>
