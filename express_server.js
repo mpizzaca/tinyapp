@@ -37,7 +37,13 @@ app.get('/urls', (req, res) => {
 // Create a new short URL
 app.post('/urls', (req, res) => {
   const shortURL = generateRandomString();
-  const longURL = req.body.longURL;
+  let longURL = req.body.longURL;
+
+  // if http:// isn't in given URL, add it
+  if (longURL.search(/https*:\/\//) === -1) {
+    longURL = 'http://' + longURL;
+  }
+
   urlDatabase[shortURL] = longURL;
   res.redirect(`/urls/${shortURL}`);
 });
