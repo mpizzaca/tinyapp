@@ -66,6 +66,17 @@ const registerNewUser = ({ email, password }) => {
   return id;
 };
 
+// checks is userId is valid
+// redirects to /login if not
+const authenticateUser = () => {
+  return (req, res, next) => {
+    if(!req.cookies.user_id || !userDatabase[req.cookies.user_id]) {
+      return res.redirect('/login');
+    }
+    next();
+  }
+};
+
 // Deletes a URL
 const deleteURL = shortURL => {
   delete urlDatabase[shortURL];
@@ -77,7 +88,7 @@ app.get('/', (req, res) => {
 });
 
 // Show all long/short URLs saved
-app.get('/urls', (req, res) => {
+app.get('/urls', authenticateUser(), (req, res) => {
   const email = findEmailByUserId(req.cookies.user_id);
   const templateVars = { 
     urls: urlDatabase,
@@ -87,7 +98,7 @@ app.get('/urls', (req, res) => {
 });
 
 // Create a new short URL
-app.post('/urls', (req, res) => {
+app.post('/urls', authenticateUser(), (req, res) => {
   const shortURL = generateRandomID();
   let longURL = req.body.longURL;
   insertURL(longURL, shortURL);
@@ -95,7 +106,7 @@ app.post('/urls', (req, res) => {
 });
 
 // Updates the longURL for a given shortURL
-app.post('/urls/:shortURL', (req, res) => {
+app.post('/urls/:shortURL', authenticateUser(), (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
   insertURL(longURL, shortURL);
@@ -103,14 +114,14 @@ app.post('/urls/:shortURL', (req, res) => {
 });
 
 // Deletes an existing short URL
-app.post('/urls/:shortURL/delete', (req, res) => {
+app.post('/urls/:shortURL/delete', authenticateUser(), (req, res) => {
   const shortURL = req.params.shortURL;
   deleteURL(shortURL);
   res.redirect('/urls');
 });
 
 // Show short URL creation page
-app.get('/urls/new', (req, res) => {
+app.get('/urls/new', authenticateUser(), (req, res) => {
   const email = findEmailByUserId(req.cookies.user_id);
   const templateVars = {
     email,
@@ -119,7 +130,7 @@ app.get('/urls/new', (req, res) => {
 });
 
 // Show details on an existing short URL
-app.get('/urls/:shortURL', (req, res) => {
+app.get('/urls/:shortURL', authenticateUser(), (req, res) => {
   const email = findEmailByUserId(req.cookies.user_id);
   const templateVars = {
     longURL: urlDatabase[req.params.shortURL],
@@ -160,9 +171,9 @@ app.post('/login', (req, res) => {
 });
 
 // Log out user
-app.post('/logout', (req, res) => {
+app.post('/logout', authenticateUser(), (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 // Show user registration page
