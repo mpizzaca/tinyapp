@@ -1,11 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
 const app = express();
 const PORT = 8080;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(morgan('short'));
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
@@ -15,7 +17,7 @@ const urlDatabase = {
 
 // Generates a random 6-char alphanumeric string
 // Used for making our short URLs
-const generateRandomString = () => {
+const generateRandomID = () => {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvxyz';
   const result = [];
   for (let i = 0; i < 6; i++) {
@@ -56,7 +58,7 @@ app.get('/urls', (req, res) => {
 
 // Create a new short URL
 app.post('/urls', (req, res) => {
-  const shortURL = generateRandomString();
+  const shortURL = generateRandomID();
   let longURL = req.body.longURL;
   insertURL(longURL, shortURL);
   res.redirect(`/urls/${shortURL}`);
