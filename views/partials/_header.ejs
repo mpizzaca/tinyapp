@@ -10,10 +10,10 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         <div style="margin-left: auto;">
-          <% if (locals.username) { %>
+          <% if (locals.email) { %>
             <div style="display: flex;">
               <div style="display: flex; align-items: center;">
-                <p style="margin-bottom: 0px;">User: <%= username %>
+                <p style="margin-bottom: 0px;">User: <%= email %>
                 </p>
               </div>
               <div style="padding: 0 10px;">
@@ -26,7 +26,7 @@
             <div style="padding: 0 10px;">
               <form method="post" action="/login" style="margin-block-end: 0;">
                 <div class="input-group mb-3" style="margin-bottom: 0!important;">
-                  <input type="text" name="username" placeholder="username" class="form-control">
+                  <input type="text" name="email" placeholder="email" class="form-control">
                   <div class="input-group-append">
                     <button type="submit" class="form-control">Sign In</button>
                   </div>
