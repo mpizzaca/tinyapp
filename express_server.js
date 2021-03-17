@@ -116,6 +116,17 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls');
 });
 
+// User Registration Page
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
+// Register a new user
+app.post('/register', (req, res) => {
+  console.log(req.body);
+  res.redirect('/register');
+});
+
 // Run the server
 app.listen(PORT, () => {
   console.log(`TinyApp server listening on http://localhost:${PORT}`);
