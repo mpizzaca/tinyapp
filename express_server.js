@@ -10,9 +10,25 @@ app.use(cookieParser());
 app.use(morgan('short'));
 app.set('view engine', 'ejs');
 
+// clear invalid cookies (ie. where request contains a cookie but no such user exists in our db)
+app.use((req, res, next) => {
+  if (req.cookies.user_id) {
+    if(!findEmailByUserId(req.cookies.user_id)) {
+      res.clearCookie('user_id');
+    }
+  }
+  next();
+});
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userId: "abcdef",
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userId: "abcdef",
+  },
 };
 
 const userDatabase = {};
@@ -29,13 +45,13 @@ const generateRandomID = () => {
 };
 
 // Inserts/updates a URL
-const insertURL = (longURL, shortURL) => {
+const insertURL = (longURL, shortURL, userId) => {
   // if http:// isn't in given URL, add it
   // TODO: make this more robust
   if (longURL.search(/https*:\/\//) === -1) {
     longURL = 'http://' + longURL;
   }
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = { longURL, userId };
 };
 
 // Get userId by email
@@ -68,13 +84,37 @@ const registerNewUser = ({ email, password }) => {
 
 // checks is userId is valid
 // redirects to /login if not
-const authenticateUser = () => {
+const isLoggedIn = () => {
   return (req, res, next) => {
     if(!req.cookies.user_id || !userDatabase[req.cookies.user_id]) {
       return res.redirect('/login');
     }
     next();
+  };
+};
+
+// Checks to see if the user owns the URL they're trying to edit/delete
+const userOwnsURL = () => {
+  return (req, res, next) => {
+    if (urlDatabase[req.params.shortURL].userId === req.cookies.user_id) {
+      // user owns this url -> continue
+      next();
+    } else {
+      // user does not own this url -> go back to /urls
+      res.redirect('/urls');
+    }
+  };
+};
+
+// Returns all URLs owned by a given user
+const getUsersURLS = userId => {
+  const result = {};
+  for (let urlId in urlDatabase) {
+    if (urlDatabase[urlId].userId === userId) {
+      result[urlId] = urlDatabase[urlId];
+    }
   }
+  return result;
 };
 
 // Deletes a URL
@@ -88,40 +128,46 @@ app.get('/', (req, res) => {
 });
 
 // Show all long/short URLs saved
-app.get('/urls', authenticateUser(), (req, res) => {
+app.get('/urls', isLoggedIn(), (req, res) => {
   const email = findEmailByUserId(req.cookies.user_id);
   const templateVars = { 
-    urls: urlDatabase,
+    urls: getUsersURLS(req.cookies.user_id),
     email,
   };
   res.render('urls_index', templateVars);
 });
 
 // Create a new short URL
-app.post('/urls', authenticateUser(), (req, res) => {
+app.post('/urls', isLoggedIn(), (req, res) => {
   const shortURL = generateRandomID();
-  let longURL = req.body.longURL;
-  insertURL(longURL, shortURL);
+  const longURL = req.body.longURL;
+  insertURL(longURL, shortURL, req.cookies.user_id);
   res.redirect(`/urls/${shortURL}`);
 });
 
 // Updates the longURL for a given shortURL
-app.post('/urls/:shortURL', authenticateUser(), (req, res) => {
+app.post('/urls/:shortURL', 
+          isLoggedIn(),
+          userOwnsURL(),
+          (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-  insertURL(longURL, shortURL);
+  insertURL(longURL, shortURL, req.cookies.user_id);
   res.redirect(`/urls/${shortURL}`);
 });
 
 // Deletes an existing short URL
-app.post('/urls/:shortURL/delete', authenticateUser(), (req, res) => {
+app.post('/urls/:shortURL/delete', 
+          isLoggedIn(),
+          userOwnsURL(),
+          (req, res) => {
   const shortURL = req.params.shortURL;
   deleteURL(shortURL);
   res.redirect('/urls');
 });
 
 // Show short URL creation page
-app.get('/urls/new', authenticateUser(), (req, res) => {
+app.get('/urls/new', isLoggedIn(), (req, res) => {
   const email = findEmailByUserId(req.cookies.user_id);
   const templateVars = {
     email,
@@ -130,10 +176,13 @@ app.get('/urls/new', authenticateUser(), (req, res) => {
 });
 
 // Show details on an existing short URL
-app.get('/urls/:shortURL', authenticateUser(), (req, res) => {
+app.get('/urls/:shortURL', 
+          isLoggedIn(),
+          userOwnsURL(),
+          (req, res) => {
   const email = findEmailByUserId(req.cookies.user_id);
   const templateVars = {
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     shortURL: req.params.shortURL,
     email,
   };
@@ -142,7 +191,7 @@ app.get('/urls/:shortURL', authenticateUser(), (req, res) => {
 
 // Given short URL, redirect to long URL
 app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -171,7 +220,7 @@ app.post('/login', (req, res) => {
 });
 
 // Log out user
-app.post('/logout', authenticateUser(), (req, res) => {
+app.post('/logout', isLoggedIn(), (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/login');
 });
