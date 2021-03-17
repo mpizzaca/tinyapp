@@ -40,7 +40,7 @@ const insertURL = (longURL, shortURL) => {
 
 // Get userId by email
 // Returns id if found, undefined otherwise
-const findUserByEmail = email => {
+const findUserIdByEmail = email => {
   for (let userId in userDatabase) {
     if (userDatabase[userId].email === email) {
       return userId;
@@ -54,6 +54,18 @@ const findEmailByUserId = userId => {
   if (userDatabase[userId]) return userDatabase[userId].email;
 };
 
+// Registers a new user in our database
+// Returns the newly generated users ID
+const registerNewUser = ({ email, password }) => {
+  const id = generateRandomID()
+  userDatabase[id] = {
+    id,
+    email,
+    password
+  };
+  return id;
+};
+
 // Deletes a URL
 const deleteURL = shortURL => {
   delete urlDatabase[shortURL];
@@ -61,7 +73,6 @@ const deleteURL = shortURL => {
 
 // Home -> redirect to /urls
 app.get('/', (req, res) => {
-  console.log(urlDatabase);
   res.redirect('/urls');
 });
 
@@ -131,14 +142,21 @@ app.get('/login', (req, res) => {
 
 // Log in user
 app.post('/login', (req, res) => {
-  const email = req.body.email;
-  const userId = findUserByEmail(email);
+  const { email, password } = req.body;
+  const userId = findUserIdByEmail(email);
+  // check if users exists
   if (userId) {
-    res.cookie('user_id', userId);
-    return res.redirect('/urls');
+    // users exists, check if password is correct
+    if (password === userDatabase[userId].password) {
+      // user authenticated!
+      res.cookie('user_id', userId);
+      return res.redirect('/urls');
+    }
+    // wrong password!
+    return res.status(401).send('Password is incorrect!');
   }
   // user doesn't exist
-  res.send('No user exists');
+  return res.status(403).send('That user doesn\'t exist!');
 });
 
 // Log out user
@@ -165,17 +183,12 @@ app.post('/register', (req, res) => {
     return res.status(400).send('Email and password cannot be blank!');
   }
   // check if user already exists
-  if (findUserByEmail(email)) {
+  if (findUserIdByEmail(email)) {
     return res.status(400).send('User already exists!');
   }
   
   // user doesn't already exist - register them
-  const userId = generateRandomID();
-  userDatabase[userId] = {
-    id: userId,
-    email,
-    password
-  };
+  const userId = registerNewUser({ email, password });
   res.cookie('user_id', userId);
   res.redirect('/urls');
   console.log('Registered a new user. Users:');

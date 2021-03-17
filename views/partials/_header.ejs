@@ -9,7 +9,7 @@
       <div class="navbar-nav" style="width: 100%;">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <div style="margin-left: auto;">
+        <div style="display: flex; margin-left: auto; align-items: center;">
           <% if (locals.email) { %>
             <div style="display: flex;">
               <div style="display: flex; align-items: center;">
@@ -23,14 +23,12 @@
               </div>
             </div>
           <% } else { %>
-            <div style="padding: 0 10px;">
-              <form method="post" action="/login" style="margin-block-end: 0;">
-                <div class="input-group mb-3" style="margin-bottom: 0!important;">
-                  <input type="text" name="email" placeholder="email" class="form-control">
-                  <div class="input-group-append">
-                    <button type="submit" class="form-control">Sign In</button>
-                  </div>
-                </div>
+            <div style="display: flex; padding: 0 10px;">
+              <form action="/login" style="padding: 0 0.5rem; margin-block-end: 0;">
+                <button type="submit" class="btn btn-primary">Login</button>
+              </form>
+              <form action="/register" style="padding: 0 0.5rem; margin-block-end: 0;">
+                <button type="submit" class="btn btn-secondary">Register</button>
               </form>
             </div>
           <% } %>
