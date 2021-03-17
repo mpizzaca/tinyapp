@@ -11,14 +11,15 @@ app.use(morgan('short'));
 app.set('view engine', 'ejs');
 
 // clear invalid cookies (ie. where request contains a cookie but no such user exists in our db)
-app.use((req, res, next) => {
+const clearInvalidCookies = (req, res, next) => {
   if (req.cookies.user_id) {
     if(!findEmailByUserId(req.cookies.user_id)) {
       res.clearCookie('user_id');
     }
   }
   next();
-});
+};
+app.use(clearInvalidCookies);
 
 const urlDatabase = {
   "b2xVn2": {
@@ -107,7 +108,7 @@ const userOwnsURL = () => {
 };
 
 // Returns all URLs owned by a given user
-const getUsersURLS = userId => {
+const urlsForUser = userId => {
   const result = {};
   for (let urlId in urlDatabase) {
     if (urlDatabase[urlId].userId === userId) {
@@ -131,7 +132,7 @@ app.get('/', (req, res) => {
 app.get('/urls', isLoggedIn(), (req, res) => {
   const email = findEmailByUserId(req.cookies.user_id);
   const templateVars = { 
-    urls: getUsersURLS(req.cookies.user_id),
+    urls: urlsForUser(req.cookies.user_id),
     email,
   };
   res.render('urls_index', templateVars);
