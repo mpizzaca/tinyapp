@@ -24,18 +24,20 @@ app.use(clearInvalidCookies);
 /*******************
   DATABASES / STORAGE
 ********************/
-const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userId: "abcdef",
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userId: "abcdef",
-  },
-};
+const urlDatabase = {};
+// Example url entry:
+// "9sm5xK": {
+//   longURL: "http://www.google.com",
+//   userId: "abcdef",
+// }
 
 const userDatabase = {};
+// Example user entry:
+//  cI7qNM: { 
+//   id: 'cI7qNM', 
+//   email: 'email@example.com', 
+//   password: 'test' 
+// }
 
 /*******************
   HELPER FUNCTIONS
