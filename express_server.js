@@ -28,7 +28,7 @@ const urlDatabase = {};
 // Example url entry:
 // "9sm5xK": {
 //   longURL: "http://www.google.com",
-//   userId: "abcdef",
+//   userId: "cI7qNM",
 // }
 
 const userDatabase = {};
