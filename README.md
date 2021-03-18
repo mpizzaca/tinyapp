@@ -8,3 +8,6 @@ Create shortened URLs to easily share links to online content!
 - Update the destination URL
 - Delete shortened URLs
 - Secure: only you can see, edit, and delete your URLs
+
+### Dependencies
+- [bcrypt](https://www.npmjs.com/package/bcrypt), [cookie-session](https://www.npmjs.com/package/cookie-session), [ejs](https://www.npmjs.com/package/ejs), [express](https://www.npmjs.com/package/express)
