@@ -121,8 +121,6 @@ app.get('/urls', isLoggedIn(), (req, res) => {
     urls: urlsForUser(userId, urlDatabase),
     email,
   };
-  console.log('templateVars:');
-  console.log(templateVars);
   res.render('urls_index', templateVars);
 });
 
@@ -193,8 +191,6 @@ app.get('/u/:id', urlExists(), (req, res) => {
   const longURL = urlDatabase[shortURL].longURL;
   incrementUrlVisits(shortURL, urlDatabase);
   res.redirect(longURL);
-  console.log('Someone used a short url! Url Database:');
-  console.log(urlDatabase);
 });
 
 // Show login page
@@ -266,8 +262,6 @@ app.post('/register', (req, res) => {
   const userId = registerNewUser({ email, password }, userDatabase);
   req.session.user_id = userId;
   res.redirect('/urls');
-  console.log('Registered a new user. Users:');
-  console.log(userDatabase);
 });
 
 // Run the server
