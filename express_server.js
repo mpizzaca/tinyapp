@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 
@@ -91,7 +92,7 @@ const registerNewUser = ({ email, password }) => {
   userDatabase[id] = {
     id,
     email,
-    password
+    password: bcrypt.hashSync(password, 10),
   };
   return id;
 };
@@ -220,7 +221,7 @@ app.post('/login', (req, res) => {
   // check if users exists
   if (userId) {
     // users exists, check if password is correct
-    if (password === userDatabase[userId].password) {
+    if(bcrypt.compareSync(password, userDatabase[userId].password)) {
       // user authenticated!
       res.cookie('user_id', userId);
       return res.redirect('/urls');
