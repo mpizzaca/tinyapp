@@ -1,3 +1,9 @@
+const bcrypt = require('bcrypt');
+
+/*******************
+  HELPER FUNCTIONS
+********************/
+
 // Get user by email
 // Returns user object if found, undefined otherwise
 const getUserByEmail = (email, database) => {
@@ -8,8 +14,8 @@ const getUserByEmail = (email, database) => {
   }
 };
 
-// Get email by userId
-// Returns email if found, undefined otherwise
+// Get user by userId
+// Returns user object if found, undefined otherwise
 const getUserById = (userId, database) => {
   if (database[userId]) return database[userId];
 };
@@ -21,17 +27,14 @@ const addUrlToDatabase = (longURL, shortURL, userId, database) => {
   if (longURL.search(/https*:\/\//) === -1) {
     longURL = 'http://' + longURL;
   }
-  database[shortURL] = { 
-    longURL, 
-    userId, 
+  database[shortURL] = {
+    longURL,
+    userId,
     createdAt: new Date(),
     timesVisited: 0,
   };
-  console.log('Added new URL. Database:');
-  console.log(database);
 };
 
-// Deletes a URL
 const deleteUrlFromDatabase = (shortURL, database) => {
   delete database[shortURL];
 };
@@ -51,5 +54,27 @@ const urlsForUser = (userId, database) => {
   return result;
 };
 
+// Generates a random 6-char alphanumeric string
+// Used for making our short URLs
+const generateRandomID = () => {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvxyz';
+  const result = [];
+  for (let i = 0; i < 6; i++) {
+    result.push(chars[Math.floor(Math.random() * chars.length)]);
+  }
+  return result.join('');
+};
 
-module.exports = { getUserByEmail, getUserById, addUrlToDatabase, deleteUrlFromDatabase, incrementUrlVisits, urlsForUser };
+// Registers a new user in our database
+// Returns the newly generated users ID
+const registerNewUser = ({ email, password }, database) => {
+  const id = generateRandomID();
+  database[id] = {
+    id,
+    email,
+    password: bcrypt.hashSync(password, 10),
+  };
+  return id;
+};
+
+module.exports = { getUserByEmail, getUserById, addUrlToDatabase, deleteUrlFromDatabase, incrementUrlVisits, urlsForUser, generateRandomID, registerNewUser };

@@ -1,12 +1,14 @@
-const { getUserByEmail, getUserById, addUrlToDatabase, deleteUrlFromDatabase, incrementUrlVisits, urlsForUser } = require('./helpers');
-const express = require('express');
+// imports
+const { getUserByEmail, getUserById, addUrlToDatabase, deleteUrlFromDatabase, incrementUrlVisits, urlsForUser, generateRandomID, registerNewUser } = require('./helpers');
 const cookieSession = require('cookie-session');
+const express = require('express');
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
-const { urlencoded } = require('express');
+
 const app = express();
 const PORT = 8080;
 
+// setup middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
@@ -40,49 +42,24 @@ const urlDatabase = {};
 
 const userDatabase = {};
 // Example user entry:
-//  cI7qNM: { 
-//   id: 'cI7qNM', 
-//   email: 'email@example.com', 
-//   password: '$2b$10$glTZIV2BVdSfEVxWJNDJdefGVMJLxmZGQoSjjb1xVS2y1V1vRWwGu' 
+//  cI7qNM: {
+//   id: 'cI7qNM',
+//   email: 'email@example.com',
+//   password: '$2b$10$glTZIV2BVdSfEVxWJNDJdefGVMJLxmZGQoSjjb1xVS2y1V1vRWwGu'
 // }
 
-/*******************
-  HELPER FUNCTIONS
-********************/
-// Generates a random 6-char alphanumeric string
-// Used for making our short URLs
-const generateRandomID = () => {
-  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvxyz';
-  const result = [];
-  for (let i = 0; i < 6; i++) {
-    result.push(chars[Math.floor(Math.random() * chars.length)]);
-  }
-  return result.join('');
-};
-
-// Registers a new user in our database
-// Returns the newly generated users ID
-const registerNewUser = ({ email, password }) => {
-  const id = generateRandomID();
-  userDatabase[id] = {
-    id,
-    email,
-    password: bcrypt.hashSync(password, 10),
-  };
-  return id;
-};
-
-// checks is user has cookie and if it's valid
+/***********************
+  MIDDLEWARE FUNCTIONS
+************************/
+// Checks is user has cookie and if it's valid
 const isLoggedIn = () => {
   return (req, res, next) => {
     const userId = req.session.user_id;
     if (!userId || !getUserById(userId, userDatabase)) {
-
       // for certain paths, redirect not logged in users to /login
       if (req.route.path === '/' || req.route.path === '/urls/new') {
         return res.redirect('/login');
       }
-
       // for all others paths, display an error
       const templateVars = {
         message: "You must be logged in to access this page!",
@@ -90,14 +67,12 @@ const isLoggedIn = () => {
       };
       return res.render('error', templateVars);
     }
-
     // user is logged in! continue.
     next();
   };
 };
 
 // Checks to see if the user owns the URL they're trying to edit/delete
-// redirects to /urls if not
 const userOwnsURL = () => {
   return (req, res, next) => {
     const shortURL = req.params.id;
@@ -105,22 +80,21 @@ const userOwnsURL = () => {
       // user owns this url -> continue
       next();
     } else {
+      // user doesn't own this url -> show error
       const templateVars = {
         message: "You don't own this URL!",
         redirect: "urls",
       };
       return res.render('error', templateVars);
-      
-      // // user does not own this url -> go back to /urls
-      // res.redirect('/urls');
     }
   };
 };
 
+// Checks to see if the short URL exists
 const urlExists = () => {
   return (req, res, next) => {
     const shortURL = req.params.id;
-    if(!urlDatabase[shortURL]) {
+    if (!urlDatabase[shortURL]) {
       const templateVars = {
         message: "This URL doesn't exist!",
         redirect: "urls",
@@ -131,15 +105,15 @@ const urlExists = () => {
   };
 };
 
-/*******************
+/**********
   ROUTES
-********************/
+***********/
 // Home -> redirect to /urls
 app.get('/', isLoggedIn(), (req, res) => {
   res.redirect('/urls');
 });
 
-// Show all long/short URLs saved
+// Show all users URLs
 app.get('/urls', isLoggedIn(), (req, res) => {
   const userId = req.session.user_id;
   const { email } = getUserById(userId, userDatabase);
@@ -152,7 +126,7 @@ app.get('/urls', isLoggedIn(), (req, res) => {
   res.render('urls_index', templateVars);
 });
 
-// Create a new shortURL
+// Create a new URL
 app.post('/urls', isLoggedIn(), (req, res) => {
   const shortURL = generateRandomID();
   const longURL = req.body.longURL;
@@ -161,9 +135,9 @@ app.post('/urls', isLoggedIn(), (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// Show short URL creation page
+// Show URL creation page
 app.get('/urls/new', isLoggedIn(), (req, res) => {
-  const userId = req.session.user_id
+  const userId = req.session.user_id;
   const { email } = getUserById(userId, userDatabase);
   const templateVars = {
     email,
@@ -171,7 +145,7 @@ app.get('/urls/new', isLoggedIn(), (req, res) => {
   res.render('urls_new', templateVars);
 });
 
-// Show details on an existing shortURL
+// Show details on an existing URL
 app.get('/urls/:id',
   isLoggedIn(),
   urlExists(),
@@ -203,7 +177,7 @@ app.post('/urls/:id',
     res.redirect(`/urls`);
   });
 
-// Deletes an existing short URL
+// Deletes an existing URL
 app.post('/urls/:id/delete',
   isLoggedIn(),
   userOwnsURL(),
@@ -213,7 +187,7 @@ app.post('/urls/:id/delete',
     res.redirect('/urls');
   });
 
-// Given short URL, redirect to long URL
+// Given short URL, redirect to destination URL
 app.get('/u/:id', urlExists(), (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL].longURL;
@@ -223,7 +197,7 @@ app.get('/u/:id', urlExists(), (req, res) => {
   console.log(urlDatabase);
 });
 
-// Show login page 
+// Show login page
 app.get('/login', (req, res) => {
   const userId = req.session.user_id;
   // if already logged in, redirect
@@ -245,18 +219,18 @@ app.post('/login', (req, res) => {
       req.session.user_id = user.id;
       return res.redirect('/urls');
     }
-    // wrong password!
+    // wrong password -> show error
     const templateVars = {
       message: 'Password is incorrect!',
       redirect: 'login',
-    }
+    };
     return res.render('error', templateVars);
   }
-  // user doesn't exist
+  // user doesn't exist -> show error
   const templateVars = {
     message: 'User doesn\'t exist!',
     redirect: 'login',
-  }
+  };
   return res.render('error', templateVars);
 });
 
@@ -289,7 +263,7 @@ app.post('/register', (req, res) => {
   }
 
   // user doesn't already exist - register them
-  const userId = registerNewUser({ email, password });
+  const userId = registerNewUser({ email, password }, userDatabase);
   req.session.user_id = userId;
   res.redirect('/urls');
   console.log('Registered a new user. Users:');
