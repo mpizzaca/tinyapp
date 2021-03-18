@@ -27,18 +27,22 @@
       </thead>
       <tbody>
         <% for(let url in urls) { %>
+          <% const shortURL = url; %> 
+          <% const longURL = urls[url].longURL; %> 
+          <% const formattedDateString = urls[url].createdAt.toLocaleString('en-CA'); %> 
+          <% const timesVisited = urls[url].timesVisited; %> 
           <tr>
             <td>
-              <%= url %>
+              <%= shortURL %>
             </td>
             <td>
-              <%= urls[url].longURL %>
+              <%= longURL %>
             </td>
             <td>
-              <%= urls[url].createdAt.toLocaleString('en-CA') %> 
+              <%= formattedDateString %> 
             </td>
             <td>
-              <%= urls[url].timesVisited %> 
+              <%= timesVisited %> 
             </td>
             <td>
               <form method="get" action="/urls/<%= url %>">

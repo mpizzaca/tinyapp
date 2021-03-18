@@ -78,17 +78,19 @@ const isLoggedIn = () => {
     const userId = req.session.user_id;
     if (!userId || !getUserById(userId, userDatabase)) {
 
-      // if user was trying to access '/', '/urls/new' redirect to login
+      // for certain paths, redirect not logged in users to /login
       if (req.route.path === '/' || req.route.path === '/urls/new') {
         return res.redirect('/login');
       }
 
-      // if they were accessing any other route, display an error
+      // for all others paths, display an error
       const templateVars = {
         message: "You must be logged in to access this page!"
       };
       return res.render('unauthorized', templateVars);
     }
+    
+    // user is logged in! go next.
     next();
   };
 };
