@@ -42,7 +42,7 @@ const userDatabase = {};
 //  cI7qNM: { 
 //   id: 'cI7qNM', 
 //   email: 'email@example.com', 
-//   password: 'test' 
+//   password: '$2b$10$glTZIV2BVdSfEVxWJNDJdefGVMJLxmZGQoSjjb1xVS2y1V1vRWwGu' 
 // }
 
 /*******************
@@ -76,10 +76,10 @@ const deleteURL = shortURL => {
 
 // Get userId by email
 // Returns id if found, undefined otherwise
-const findUserIdByEmail = email => {
-  for (let userId in userDatabase) {
-    if (userDatabase[userId].email === email) {
-      return userId;
+const findUserByEmail = (email, database) => {
+  for (let userId in database) {
+    if (database[userId].email === email) {
+      return database[userId];
     }
   }
 };
@@ -223,13 +223,13 @@ app.get('/login', (req, res) => {
 // Log in user
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-  const userId = findUserIdByEmail(email);
+  const user = findUserByEmail(email, userDatabase);
   // check if users exists
-  if (userId) {
+  if (user.id) {
     // users exists, check if password is correct
-    if (bcrypt.compareSync(password, userDatabase[userId].password)) {
+    if (bcrypt.compareSync(password, userDatabase[user.id].password)) {
       // user authenticated!
-      req.session.user_id = userId;
+      req.session.user_id = user.id;
       return res.redirect('/urls');
     }
     // wrong password!
@@ -263,7 +263,7 @@ app.post('/register', (req, res) => {
     return res.status(400).send('Email and password cannot be blank!');
   }
   // check if user already exists
-  if (findUserIdByEmail(email)) {
+  if (findUserByEmail(email, userDatabase)) {
     return res.status(400).send('User already exists!');
   }
 
