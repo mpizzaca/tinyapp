@@ -1,8 +1,9 @@
-const { getUserByEmail, getUserById } = require('./helpers');
+const { getUserByEmail, getUserById, addUrlToDatabase, deleteUrlFromDatabase, incrementUrlVisits, urlsForUser } = require('./helpers');
 const express = require('express');
 const cookieSession = require('cookie-session');
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
+const { urlencoded } = require('express');
 const app = express();
 const PORT = 8080;
 
@@ -33,6 +34,8 @@ const urlDatabase = {};
 // "9sm5xK": {
 //   longURL: "http://www.google.com",
 //   userId: "cI7qNM",
+//   createdAt: 2021-03-18T18:48:01.936Z,
+//   timesVisited: 3
 // }
 
 const userDatabase = {};
@@ -57,23 +60,6 @@ const generateRandomID = () => {
   return result.join('');
 };
 
-// Inserts/updates a URL
-const addUrlToDatabase = (longURL, shortURL, userId, database) => {
-  // if http:// isn't in given URL, add it
-  // TODO: make this more robust
-  if (longURL.search(/https*:\/\//) === -1) {
-    longURL = 'http://' + longURL;
-  }
-  database[shortURL] = { longURL, userId };
-};
-
-// Deletes a URL
-const deleteUrlFromDatabase = (shortURL, database) => {
-  delete database[shortURL];
-};
-
-
-
 // Registers a new user in our database
 // Returns the newly generated users ID
 const registerNewUser = ({ email, password }) => {
@@ -86,12 +72,22 @@ const registerNewUser = ({ email, password }) => {
   return id;
 };
 
-// checks is user has cookie, and if it's valid
-// redirects to /login if not
+// checks is user has cookie and if it's valid
 const isLoggedIn = () => {
   return (req, res, next) => {
-    if (!req.session.user_id || !userDatabase[req.session.user_id]) {
-      return res.redirect('/login');
+    const userId = req.session.user_id;
+    if (!userId || !getUserById(userId, userDatabase)) {
+
+      // if user was trying to access '/', redirect to login
+      if (req.route.path === '/') {
+        return res.redirect('/login');
+      }
+
+      // if they were accessing any other route, display an error
+      const templateVars = {
+        message: "You must be logged in to access this page!"
+      };
+      return res.render('unauthorized', templateVars);
     }
     next();
   };
@@ -111,22 +107,11 @@ const userOwnsURL = () => {
   };
 };
 
-// Returns all URLs owned by a given user
-const urlsForUser = userId => {
-  const result = {};
-  for (let urlId in urlDatabase) {
-    if (urlDatabase[urlId].userId === userId) {
-      result[urlId] = urlDatabase[urlId];
-    }
-  }
-  return result;
-};
-
 /*******************
   ROUTES
 ********************/
 // Home -> redirect to /urls
-app.get('/', (req, res) => {
+app.get('/', isLoggedIn(), (req, res) => {
   res.redirect('/urls');
 });
 
@@ -135,9 +120,11 @@ app.get('/urls', isLoggedIn(), (req, res) => {
   const userId = req.session.user_id;
   const { email } = getUserById(userId, userDatabase);
   const templateVars = {
-    urls: urlsForUser(userId),
+    urls: urlsForUser(userId, urlDatabase),
     email,
   };
+  console.log('templateVars:');
+  console.log(templateVars);
   res.render('urls_index', templateVars);
 });
 
@@ -202,7 +189,10 @@ app.post('/urls/:shortURL/delete',
 app.get('/u/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
+  incrementUrlVisits(shortURL, urlDatabase);
   res.redirect(longURL);
+  console.log('Someone used a short url! Url Database:');
+  console.log(urlDatabase);
 });
 
 // Show login page 

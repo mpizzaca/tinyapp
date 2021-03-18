@@ -19,6 +19,8 @@
         <tr>
           <th scope="col">Short URL</th>
           <th scope="col">Long URL</th>
+          <th scope="col">Created At</th>
+          <th scope="col">Times Visited</th>
           <th scope="col">Edit</th>
           <th scope="col">Delete</th>
         </tr>
@@ -31,6 +33,12 @@
             </td>
             <td>
               <%= urls[url].longURL %>
+            </td>
+            <td>
+              <%= urls[url].createdAt.toLocaleString('en-CA') %> 
+            </td>
+            <td>
+              <%= urls[url].timesVisited %> 
             </td>
             <td>
               <form method="get" action="/urls/<%= url %>">
