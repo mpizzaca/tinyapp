@@ -211,7 +211,7 @@ app.post('/urls/:id/delete',
   });
 
 // Given short URL, redirect to long URL
-app.get('/u/:id', (req, res) => {
+app.get('/u/:id', urlExists(), (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL].longURL;
   incrementUrlVisits(shortURL, urlDatabase);
