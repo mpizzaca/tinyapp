@@ -78,8 +78,8 @@ const isLoggedIn = () => {
     const userId = req.session.user_id;
     if (!userId || !getUserById(userId, userDatabase)) {
 
-      // if user was trying to access '/', redirect to login
-      if (req.route.path === '/') {
+      // if user was trying to access '/', '/urls/new' redirect to login
+      if (req.route.path === '/' || req.route.path === '/urls/new') {
         return res.redirect('/login');
       }
 
