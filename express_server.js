@@ -1,15 +1,12 @@
 const { getUserByEmail, getUserById } = require('./helpers');
 const express = require('express');
-const bodyParser = require('body-parser');
-// const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 
-app.use(bodyParser.urlencoded({ extended: true }));
-// app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
   keys: ['j094jf', '40j3g0'],
