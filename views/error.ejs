@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TinyApp - Unauthorized</title>
+  <title>TinyApp - Error</title>
 </head>
 <body>
   <%= message %>
-  <a href="/login">Login</a> 
+  <% if (redirect === 'login') { %> 
+    <a href="/login">Login</a> 
+  <% } else if (redirect === 'urls') { %> 
+    <a href="/urls">My URLS</a> 
+  <% } %> 
 </body>
 </html>

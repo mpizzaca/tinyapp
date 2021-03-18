@@ -85,12 +85,13 @@ const isLoggedIn = () => {
 
       // for all others paths, display an error
       const templateVars = {
-        message: "You must be logged in to access this page!"
+        message: "You must be logged in to access this page!",
+        redirect: "login"
       };
-      return res.render('unauthorized', templateVars);
+      return res.render('error', templateVars);
     }
-    
-    // user is logged in! go next.
+
+    // user is logged in! continue.
     next();
   };
 };
@@ -99,13 +100,34 @@ const isLoggedIn = () => {
 // redirects to /urls if not
 const userOwnsURL = () => {
   return (req, res, next) => {
-    if (urlDatabase[req.params.shortURL].userId === req.session.user_id) {
+    const shortURL = req.params.id;
+    if (urlDatabase[shortURL].userId === req.session.user_id) {
       // user owns this url -> continue
       next();
     } else {
-      // user does not own this url -> go back to /urls
-      res.redirect('/urls');
+      const templateVars = {
+        message: "You don't own this URL!",
+        redirect: "urls",
+      };
+      return res.render('error', templateVars);
+      
+      // // user does not own this url -> go back to /urls
+      // res.redirect('/urls');
     }
+  };
+};
+
+const urlExists = () => {
+  return (req, res, next) => {
+    const shortURL = req.params.id;
+    if(!urlDatabase[shortURL]) {
+      const templateVars = {
+        message: "This URL doesn't exist!",
+        redirect: "urls",
+      };
+      return res.render('error', templateVars);
+    }
+    next();
   };
 };
 
@@ -150,11 +172,12 @@ app.get('/urls/new', isLoggedIn(), (req, res) => {
 });
 
 // Show details on an existing shortURL
-app.get('/urls/:shortURL',
+app.get('/urls/:id',
   isLoggedIn(),
+  urlExists(),
   userOwnsURL(),
   (req, res) => {
-    const shortURL = req.params.shortURL;
+    const shortURL = req.params.id;
     const userId = req.session.user_id;
     const { email } = getUserById(userId, userDatabase);
     const templateVars = {
@@ -166,11 +189,11 @@ app.get('/urls/:shortURL',
   });
 
 // Updates the longURL for a given shortURL
-app.post('/urls/:shortURL',
+app.post('/urls/:id',
   isLoggedIn(),
   userOwnsURL(),
   (req, res) => {
-    const shortURL = req.params.shortURL;
+    const shortURL = req.params.id;
     const longURL = req.body.longURL;
     const userId = req.session.user_id;
     addUrlToDatabase(longURL, shortURL, userId, urlDatabase);
@@ -178,18 +201,18 @@ app.post('/urls/:shortURL',
   });
 
 // Deletes an existing short URL
-app.post('/urls/:shortURL/delete',
+app.post('/urls/:id/delete',
   isLoggedIn(),
   userOwnsURL(),
   (req, res) => {
-    const shortURL = req.params.shortURL;
+    const shortURL = req.params.id;
     deleteUrlFromDatabase(shortURL, urlDatabase);
     res.redirect('/urls');
   });
 
 // Given short URL, redirect to long URL
-app.get('/u/:shortURL', (req, res) => {
-  const shortURL = req.params.shortURL;
+app.get('/u/:id', (req, res) => {
+  const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL].longURL;
   incrementUrlVisits(shortURL, urlDatabase);
   res.redirect(longURL);
