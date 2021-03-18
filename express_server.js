@@ -180,9 +180,12 @@ app.get('/urls/:id',
     const shortURL = req.params.id;
     const userId = req.session.user_id;
     const { email } = getUserById(userId, userDatabase);
+    const { longURL, createdAt, timesVisited } = urlDatabase[shortURL];
     const templateVars = {
-      longURL: urlDatabase[shortURL].longURL,
+      longURL,
       shortURL,
+      createdAt,
+      timesVisited,
       email,
     };
     res.render('urls_show', templateVars);
@@ -197,7 +200,7 @@ app.post('/urls/:id',
     const longURL = req.body.longURL;
     const userId = req.session.user_id;
     addUrlToDatabase(longURL, shortURL, userId, urlDatabase);
-    res.redirect(`/urls/${shortURL}`);
+    res.redirect(`/urls`);
   });
 
 // Deletes an existing short URL
@@ -222,6 +225,11 @@ app.get('/u/:id', urlExists(), (req, res) => {
 
 // Show login page 
 app.get('/login', (req, res) => {
+  const userId = req.session.user_id;
+  // if already logged in, redirect
+  if (userId && getUserById(userId, userDatabase)) {
+    return res.redirect('/urls');
+  }
   res.render('login');
 });
 
@@ -238,10 +246,18 @@ app.post('/login', (req, res) => {
       return res.redirect('/urls');
     }
     // wrong password!
-    return res.status(401).send('Password is incorrect!');
+    const templateVars = {
+      message: 'Password is incorrect!',
+      redirect: 'login',
+    }
+    return res.render('error', templateVars);
   }
   // user doesn't exist
-  return res.status(403).send('That user doesn\'t exist!');
+  const templateVars = {
+    message: 'User doesn\'t exist!',
+    redirect: 'login',
+  }
+  return res.render('error', templateVars);
 });
 
 // Log out user
@@ -252,9 +268,9 @@ app.post('/logout', isLoggedIn(), (req, res) => {
 
 // Show user registration page
 app.get('/register', (req, res) => {
-  if (req.session.user_id) {
-    // user is already registered
-    // TODO: display an 'already registered!' error
+  const userId = req.session.user_id;
+  // if already logged in, redirect
+  if (userId && getUserById(userId, userDatabase)) {
     return res.redirect('/urls');
   }
   res.render('register');
