@@ -209,7 +209,7 @@ app.get('/u/:shortURL', (req, res) => {
   res.redirect(longURL);
 });
 
-// Show login page
+// Show login page 
 app.get('/login', (req, res) => {
   res.render('login');
 });
