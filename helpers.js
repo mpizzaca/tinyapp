@@ -21,17 +21,23 @@ const getUserById = (userId, database) => {
 };
 
 // Inserts/updates a URL
-const addUrlToDatabase = (longURL, shortURL, userId, database) => {
-  // if http:// isn't in given URL, add it
-  // TODO: make this more robust
+const addUrlToDatabase = (longURL, shortURL, userId, database, isUpdate) => {
+  // if http:// isn't in the URL, add it
+  // TODO: make this a more robust, and/or move validation into route handler to show user an error if the URL is wrong 
   if (longURL.search(/https*:\/\//) === -1) {
     longURL = 'http://' + longURL;
+  }
+  // if we're updating an existing url, don't overwrite creation date / visits
+  if (isUpdate) {
+    database[shortURL].longURL = longURL;
+    return;
   }
   database[shortURL] = {
     longURL,
     userId,
     createdAt: new Date(),
-    timesVisited: 0,
+    visits: 0,
+    uniqueVisits: 0,
   };
 };
 
@@ -39,8 +45,9 @@ const deleteUrlFromDatabase = (shortURL, database) => {
   delete database[shortURL];
 };
 
-const incrementUrlVisits = (shortURL, database) => {
-  database[shortURL].timesVisited += 1;
+const incrementUrlVisits = (shortURL, database, isUnique) => {
+  database[shortURL].visits += 1;
+  database[shortURL].uniqueVisits += isUnique ? 1 : 0;
 };
 
 // Returns all URLs owned by a given user

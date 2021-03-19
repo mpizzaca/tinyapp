@@ -17,7 +17,7 @@ app.use(cookieSession({
 app.use(morgan('short'));
 app.set('view engine', 'ejs');
 
-// clear invalid cookies (ie. where request contains a cookie but no such user exists in our db)
+// clear invalid user_id cookies (ie. where request contains a cookie but no such user exists in our db)
 const clearInvalidCookies = (req, res, next) => {
   if (req.session.user_id) {
     if (!getUserById(req.session.user_id, userDatabase)) {
@@ -37,7 +37,8 @@ const urlDatabase = {};
 //   longURL: "http://www.google.com",
 //   userId: "cI7qNM",
 //   createdAt: 2021-03-18T18:48:01.936Z,
-//   timesVisited: 3
+//   visits: 3,
+//   uniqueVisits: 2,
 // }
 
 const userDatabase = {};
@@ -45,7 +46,7 @@ const userDatabase = {};
 //  cI7qNM: {
 //   id: 'cI7qNM',
 //   email: 'email@example.com',
-//   password: '$2b$10$glTZIV2BVdSfEVxWJNDJdefGVMJLxmZGQoSjjb1xVS2y1V1vRWwGu'
+//   password: '$2b$10$glTZIV2BVdSfEVxWJNDJdefGVMJLxmZGQoSjjb1xVS2y1V1vRWwGu',
 // }
 
 /***********************
@@ -76,10 +77,7 @@ const isLoggedIn = () => {
 const userOwnsURL = () => {
   return (req, res, next) => {
     const shortURL = req.params.id;
-    if (urlDatabase[shortURL].userId === req.session.user_id) {
-      // user owns this url -> continue
-      next();
-    } else {
+    if (urlDatabase[shortURL].userId !== req.session.user_id) {
       // user doesn't own this url -> show error
       const templateVars = {
         message: "You don't own this URL!",
@@ -87,6 +85,8 @@ const userOwnsURL = () => {
       };
       return res.render('error', templateVars);
     }
+    // user owns this url -> continue
+    next();
   };
 };
 
@@ -95,12 +95,14 @@ const urlExists = () => {
   return (req, res, next) => {
     const shortURL = req.params.id;
     if (!urlDatabase[shortURL]) {
+      // url doesn't exist -> show error
       const templateVars = {
         message: "This URL doesn't exist!",
         redirect: "urls",
       };
       return res.render('error', templateVars);
     }
+    // url does exist -> continue
     next();
   };
 };
@@ -152,12 +154,13 @@ app.get('/urls/:id',
     const shortURL = req.params.id;
     const userId = req.session.user_id;
     const { email } = getUserById(userId, userDatabase);
-    const { longURL, createdAt, timesVisited } = urlDatabase[shortURL];
+    const { longURL, createdAt, visits, uniqueVisits } = urlDatabase[shortURL];
     const templateVars = {
       longURL,
       shortURL,
       createdAt,
-      timesVisited,
+      visits,
+      uniqueVisits,
       email,
     };
     res.render('urls_show', templateVars);
@@ -171,7 +174,7 @@ app.post('/urls/:id',
     const shortURL = req.params.id;
     const longURL = req.body.longURL;
     const userId = req.session.user_id;
-    addUrlToDatabase(longURL, shortURL, userId, urlDatabase);
+    addUrlToDatabase(longURL, shortURL, userId, urlDatabase, true);
     res.redirect(`/urls`);
   });
 
@@ -189,7 +192,14 @@ app.post('/urls/:id/delete',
 app.get('/u/:id', urlExists(), (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL].longURL;
-  incrementUrlVisits(shortURL, urlDatabase);
+  // add a flag to the users cookie when using a short URL
+  // this lets us track unique visits
+  let uniqueVisitor = false;
+  if (!req.session[shortURL]) {
+    req.session[shortURL] = true;
+    uniqueVisitor = true;
+  }
+  incrementUrlVisits(shortURL, urlDatabase, uniqueVisitor);
   res.redirect(longURL);
 });
 
