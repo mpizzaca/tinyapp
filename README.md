@@ -12,7 +12,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 ## Features
 - Create shortened URLs
 - Track when the URL was created
-- Track how many times the URL has been used
+- Track how many times the URL has been used (both unique and total)
 - Update the destination URL
 - Delete shortened URLs
 - Secure: only you can see, edit, and delete your URLs
